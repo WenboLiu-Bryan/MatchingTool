@@ -83,6 +83,27 @@
         .match-button {
             display: none;
         }
+
+        .checkbox-center input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        #addRow {
+            background-color: #366ad8;
+        }
+
+        .rank-star {
+            color: brown;
+        }
+
+        .rank-king {
+            color: orange;
+        }
+
+        .rank-legend {
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -125,9 +146,9 @@
                     </td>
                     <td>
                         <select name="rank_${rowNumber}">
-                            <option value="star">星耀</option>
-                            <option value="king" selected>王者</option>
-                            <option value="legend">传奇</option>
+                            <option value="star" class="rank-star">星耀</option>
+                            <option value="king" class="rank-king" selected>王者</option>
+                            <option value="legend" class="rank-legend">传奇</option>
                         </select>
                     </td>
                     <td class="checkbox-center">
@@ -157,7 +178,7 @@
         }
     }
 
-    // 添加行���函数
+    // 添加行函数
     function addNewRow() {
         currentRowCount++;
         const tbody = document.querySelector('tbody');
@@ -223,7 +244,7 @@
 
             // 为每个位置寻找合适的玩家
             for (const position of ['top', 'jungle', 'mid', 'support', 'adc']) {
-                // 找到��打这个位置的玩家
+                // 找到打这个位置的玩家
                 const playerIndex = currentPlayers.findIndex(p => p.roles.includes(position));
                 if (playerIndex !== -1) {
                     const player = currentPlayers[playerIndex];
