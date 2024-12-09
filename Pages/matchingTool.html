@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>队伍匹配系统</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .match-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .checkbox-center {
+            text-align: center;
+        }
+        #matchResult {
+            margin: 20px;
+            padding: 20px;
+        }
+
+        #matchResult h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        #matchResult table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #matchResult th, #matchResult td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        #matchResult th {
+            background-color: #f2f2f2;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            padding: 10px;
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .action-button:hover {
+            background-color: #45a049;
+        }
+
+        .match-button {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<form id="teamForm">
+    <table>
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>游戏ID</th>
+            <th>段位</th>
+            <th>上单</th>
+            <th>打野</th>
+            <th>中单</th>
+            <th>辅助</th>
+            <th>下路</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- 使用JavaScript生成行 -->
+        </tbody>
+    </table>
+    <div class="button-container">
+        <button type="button" id="addRow" class="action-button">添加行</button>
+        <button type="button" id="startMatching" class="action-button">开始匹配</button>
+    </div>
+</form>
+
+<div id="matchResult"></div>
+
+<script>
+    let currentRowCount = 10;
+
+    // 生成行的函数
+    function generateRow(rowNumber) {
+        return `
+                <tr>
+                    <td>${rowNumber}</td>
+                    <td>
+                        <input type="text" name="playerId_${rowNumber}" value="玩家${rowNumber}" readonly>
+                    </td>
+                    <td>
+                        <select name="rank_${rowNumber}">
+                            <option value="star">星耀</option>
+                            <option value="king" selected>王者</option>
+                            <option value="legend">传奇</option>
+                        </select>
+                    </td>
+                    <td class="checkbox-center">
+                        <input type="checkbox" name="roles_${rowNumber}" value="top">
+                    </td>
+                    <td class="checkbox-center">
+                        <input type="checkbox" name="roles_${rowNumber}" value="jungle">
+                    </td>
+                    <td class="checkbox-center">
+                        <input type="checkbox" name="roles_${rowNumber}" value="mid">
+                    </td>
+                    <td class="checkbox-center">
+                        <input type="checkbox" name="roles_${rowNumber}" value="support">
+                    </td>
+                    <td class="checkbox-center">
+                        <input type="checkbox" name="roles_${rowNumber}" value="adc">
+                    </td>
+                </tr>
+            `;
+    }
+
+    // 生成初始10行的函数
+    function generateInitialRows() {
+        const tbody = document.querySelector('tbody');
+        for (let i = 1; i <= 10; i++) {
+            tbody.insertAdjacentHTML('beforeend', generateRow(i));
+        }
+    }
+
+    // 添加行���函数
+    function addNewRow() {
+        currentRowCount++;
+        const tbody = document.querySelector('tbody');
+        tbody.insertAdjacentHTML('beforeend', generateRow(currentRowCount));
+    }
+
+    // 页面加载时生成初始表格
+    window.onload = function() {
+        generateInitialRows();
+
+        // 添加"添加行"按钮的事件监听
+        document.getElementById('addRow').addEventListener('click', addNewRow);
+
+        // 开始匹配按钮的事件监听（保持原有的匹配逻辑）
+        document.getElementById('startMatching').addEventListener('click', function() {
+            // 获取所有填写的数据
+            const players = [];
+            for (let i = 1; i <= currentRowCount; i++) {
+                const id = document.querySelector(`[name="playerId_${i}"]`).value;
+                if (id) {
+                    const rank = document.querySelector(`[name="rank_${i}"]`).value;
+                    const roles = Array.from(document.querySelectorAll(`[name="roles_${i}"]:checked`))
+                        .map(checkbox => checkbox.value);
+
+                    if (roles.length === 0) {
+                        alert(`第${i}行的玩家必须至少选择���个位置！`);
+                        return;
+                    }
+
+                    players.push({
+                        id: id,
+                        rank: rank,
+                        roles: roles
+                    });
+                }
+            }
+
+            if (players.length === 0) {
+                alert('请至少输入一名玩家信息！');
+                return;
+            }
+
+            displayMatchResult(players);
+        });
+    };
+
+    // 添加匹配算法函数
+    function matchTeams(players) {
+        // 打乱玩家顺序以实现随机性
+        players = [...players].sort(() => Math.random() - 0.5);
+        const teams = [];
+        let currentPlayers = [...players];
+
+        while (currentPlayers.length > 0) {
+            const team = {
+                top: null,
+                jungle: null,
+                mid: null,
+                support: null,
+                adc: null
+            };
+            const teamMembers = [];
+
+            // 为每个位置寻找合适的玩家
+            for (const position of ['top', 'jungle', 'mid', 'support', 'adc']) {
+                // 找到��打这个位置的玩家
+                const playerIndex = currentPlayers.findIndex(p => p.roles.includes(position));
+                if (playerIndex !== -1) {
+                    const player = currentPlayers[playerIndex];
+                    team[position] = player;
+                    teamMembers.push({...player, assignedRole: position});
+                    currentPlayers.splice(playerIndex, 1);
+                }
+            }
+
+            if (teamMembers.length > 0) {
+                teams.push(teamMembers);
+            }
+        }
+
+        return teams;
+    }
+
+    // 修改显示结果的函数
+    function displayMatchResult(players) {
+        const teams = matchTeams(players);
+        const resultDiv = document.getElementById('matchResult');
+
+        const roleMapping = {
+            'top': '上单',
+            'jungle': '打野',
+            'mid': '中单',
+            'support': '辅助',
+            'adc': '下路'
+        };
+
+        const rankMapping = {
+            'star': '星耀',
+            'king': '王者',
+            'legend': '传奇'
+        };
+
+        let resultHTML = `<h2>匹配结果</h2>`;
+
+        teams.forEach((team, index) => {
+            resultHTML += `
+                    <div class="team-card">
+                        <h3>第 ${index + 1} 队</h3>
+                        <table class="team-table">
+                            <thead>
+                                <tr>
+                                    <th>位置</th>
+                                    <th>游戏ID</th>
+                                    <th>段位</th>
+                                    <th>可选位置</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+            team.forEach(player => {
+                const chineseRoles = player.roles.map(role => roleMapping[role]).join(', ');
+                resultHTML += `
+                        <tr>
+                            <td><span class="role-badge ${player.assignedRole}">${roleMapping[player.assignedRole]}</span></td>
+                            <td>${player.id}</td>
+                            <td>${rankMapping[player.rank] || '未选择'}</td>
+                            <td>${chineseRoles}</td>
+                        </tr>
+                    `;
+            });
+
+            resultHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+        });
+
+        resultDiv.innerHTML = resultHTML;
+    }
+
+    // 添加新的样式
+    const newStyles = `
+            <style>
+                .team-card {
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    margin: 20px 0;
+                    padding: 20px;
+                }
+
+                .team-card h3 {
+                    color: #333;
+                    margin-bottom: 15px;
+                    text-align: center;
+                }
+
+                .team-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 10px;
+                }
+
+                .team-table th, .team-table td {
+                    padding: 12px;
+                    text-align: center;
+                    border: 1px solid #eee;
+                }
+
+                .team-table th {
+                    background-color: #f8f9fa;
+                    color: #333;
+                }
+
+                .role-badge {
+                    display: inline-block;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    color: white;
+                    font-size: 0.9em;
+                }
+
+                .role-badge.top { background-color: #ff4757; }
+                .role-badge.jungle { background-color: #2ed573; }
+                .role-badge.mid { background-color: #1e90ff; }
+                .role-badge.support { background-color: #5352ed; }
+                .role-badge.adc { background-color: #ffa502; }
+
+                #matchResult {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+
+                #matchResult h2 {
+                    text-align: center;
+                    color: #333;
+                    margin-bottom: 30px;
+                }
+            </style>
+        `;
+
+    // 在页面加载时添加样式
+    document.head.insertAdjacentHTML('beforeend', newStyles);
+</script>
+</body>
+</html>

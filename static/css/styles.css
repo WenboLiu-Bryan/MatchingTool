@@ -1,0 +1,34 @@
+.registration-form {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.roles-selection {
+    margin: 15px 0;
+}
+
+.roles-selection label {
+    margin-right: 15px;
+}
+
+.match-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.teams-container {
+    margin: 20px;
+}
+
+.team {
+    border: 1px solid #ddd;
+    margin: 10px 0;
+    padding: 15px;
+}
